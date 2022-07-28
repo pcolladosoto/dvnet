@@ -232,23 +232,11 @@ func TestNetDefValidation(t *testing.T) {
 	}{{jsonNetDefs[0]}, {jsonNetDefs[1]}, {jsonNetDefs[2]}}
 
 	for i, test := range tests {
-		if err := validateDef(test.in); err != nil {
-			t.Errorf("validateDef(test#%d); err %+v", i, err)
-		}
-	}
-}
-
-func TestNetDefValidationFoo(t *testing.T) {
-	tests := []struct {
-		in string
-	}{{jsonNetDefs[0]}, {jsonNetDefs[1]}, {jsonNetDefs[2]}}
-
-	for i, test := range tests {
 		def, err := parseDef([]byte(test.in))
 		if err != nil {
 			t.Errorf("failed parsing net definition %d", i)
 		}
-		if err := validateDefFoo(def); err != nil {
+		if err := validateDef(def); err != nil {
 			t.Errorf("validateDef(test#%d); netDef = %+v; err %+v", i, def, err)
 		}
 	}
