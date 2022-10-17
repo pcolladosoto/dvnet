@@ -149,8 +149,8 @@ func TestNetDefLoading(t *testing.T) {
 			jsonNetDefs[0], netDef{
 				Name: "Test Net 0", OutboundAccess: true, UpdateHostsFile: true,
 				Subnets: map[string]subnetDef{
-					"A": {CIDRBlock: "10.0.0.0/24", Hosts: []string{"A-1", "A-2"}},
-					"B": {CIDRBlock: "10.0.1.0/24", Hosts: []string{"B-1", "B-2"}}},
+					"A": {CIDRBlock: cidrParserWrapper("10.0.0.0/24"), Hosts: []string{"A-1", "A-2"}},
+					"B": {CIDRBlock: cidrParserWrapper("10.0.1.0/24"), Hosts: []string{"B-1", "B-2"}}},
 				Routers: map[string]routerDef{
 					"R-1": {
 						FWRules: fwRuleDef{Policy: "ACCEPT", Accept: [][]fwTargetDef{}, Drop: [][]fwTargetDef{{"A-1", "B-1", true}}},
@@ -167,9 +167,9 @@ func TestNetDefLoading(t *testing.T) {
 			jsonNetDefs[1], netDef{
 				Name: "Test Net 1", OutboundAccess: true, UpdateHostsFile: false,
 				Subnets: map[string]subnetDef{
-					"A": {CIDRBlock: "10.0.0.0/24", Hosts: []string{"A-1", "A-2", "A-3"}},
-					"B": {CIDRBlock: "10.0.1.0/24", Hosts: []string{"B-1", "B-2", "B-3"}},
-					"C": {CIDRBlock: "10.0.2.0/24", Hosts: []string{"C-1", "C-2", "C-3"}}},
+					"A": {CIDRBlock: cidrParserWrapper("10.0.0.0/24"), Hosts: []string{"A-1", "A-2", "A-3"}},
+					"B": {CIDRBlock: cidrParserWrapper("10.0.1.0/24"), Hosts: []string{"B-1", "B-2", "B-3"}},
+					"C": {CIDRBlock: cidrParserWrapper("10.0.2.0/24"), Hosts: []string{"C-1", "C-2", "C-3"}}},
 				Routers: map[string]routerDef{
 					"R-1": {
 						FWRules: fwRuleDef{Policy: "", Accept: [][]fwTargetDef(nil), Drop: [][]fwTargetDef(nil)},
@@ -190,18 +190,18 @@ func TestNetDefLoading(t *testing.T) {
 			jsonNetDefs[2], netDef{
 				Name: "Test Net 2", OutboundAccess: true, UpdateHostsFile: true,
 				Subnets: map[string]subnetDef{
-					"A": {CIDRBlock: "10.0.0.0/24", Hosts: []string{"A-1", "A-2", "A-3"}},
-					"B": {CIDRBlock: "10.0.1.0/24", Hosts: []string{"B-1", "B-2", "B-3"}},
-					"C": {CIDRBlock: "10.0.2.0/24", Hosts: []string{"C-1", "C-2", "C-3"}},
-					"D": {CIDRBlock: "10.0.3.0/24", Hosts: []string{"D-1", "D-2", "D-3"}},
-					"E": {CIDRBlock: "10.0.4.0/24", Hosts: []string{"E-1", "E-2", "E-3"}},
-					"F": {CIDRBlock: "10.0.5.0/24", Hosts: []string{"F-1", "F-2", "F-3"}},
-					"G": {CIDRBlock: "10.0.6.0/24", Hosts: []string{"G-1", "G-2", "G-3"}},
-					"H": {CIDRBlock: "10.0.7.0/24", Hosts: []string{"H-1", "H-2", "H-3"}},
-					"I": {CIDRBlock: "10.0.8.0/24", Hosts: []string{"I-1", "I-2", "I-3"}},
-					"J": {CIDRBlock: "10.0.9.0/24", Hosts: []string{"J-1", "J-2", "J-3"}},
-					"K": {CIDRBlock: "10.0.10.0/24", Hosts: []string{"K-1", "K-2", "K-3"}},
-					"L": {CIDRBlock: "10.0.11.0/24", Hosts: []string{"L-1", "L-2", "L-3"}}},
+					"A": {CIDRBlock: cidrParserWrapper("10.0.0.0/24"), Hosts: []string{"A-1", "A-2", "A-3"}},
+					"B": {CIDRBlock: cidrParserWrapper("10.0.1.0/24"), Hosts: []string{"B-1", "B-2", "B-3"}},
+					"C": {CIDRBlock: cidrParserWrapper("10.0.2.0/24"), Hosts: []string{"C-1", "C-2", "C-3"}},
+					"D": {CIDRBlock: cidrParserWrapper("10.0.3.0/24"), Hosts: []string{"D-1", "D-2", "D-3"}},
+					"E": {CIDRBlock: cidrParserWrapper("10.0.4.0/24"), Hosts: []string{"E-1", "E-2", "E-3"}},
+					"F": {CIDRBlock: cidrParserWrapper("10.0.5.0/24"), Hosts: []string{"F-1", "F-2", "F-3"}},
+					"G": {CIDRBlock: cidrParserWrapper("10.0.6.0/24"), Hosts: []string{"G-1", "G-2", "G-3"}},
+					"H": {CIDRBlock: cidrParserWrapper("10.0.7.0/24"), Hosts: []string{"H-1", "H-2", "H-3"}},
+					"I": {CIDRBlock: cidrParserWrapper("10.0.8.0/24"), Hosts: []string{"I-1", "I-2", "I-3"}},
+					"J": {CIDRBlock: cidrParserWrapper("10.0.9.0/24"), Hosts: []string{"J-1", "J-2", "J-3"}},
+					"K": {CIDRBlock: cidrParserWrapper("10.0.10.0/24"), Hosts: []string{"K-1", "K-2", "K-3"}},
+					"L": {CIDRBlock: cidrParserWrapper("10.0.11.0/24"), Hosts: []string{"L-1", "L-2", "L-3"}}},
 				Routers: map[string]routerDef{
 					"R-1": {
 						FWRules: fwRuleDef{Policy: "", Accept: [][]fwTargetDef(nil), Drop: [][]fwTargetDef(nil)},
