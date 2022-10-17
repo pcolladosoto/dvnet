@@ -15,7 +15,7 @@ func TestAddresserInstantiation(t *testing.T) {
 
 	for _, test := range tests {
 		addresser, _ := newSubnetAddresser("addresserTest", cidrParserWrapper(test.in))
-		if nextCIDR := addresser.nextCIDR(); nextCIDR != test.want {
+		if nextCIDR := addresser.nextCIDR("dummy-host"); nextCIDR != test.want {
 			t.Errorf("nextCIDR(%s); netDef = %s; wanted %s", test.in, nextCIDR, test.want)
 		}
 	}

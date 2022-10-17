@@ -32,6 +32,7 @@ func createSubnet(netState *NetworkState, subnetName string, def subnetDef) erro
 		if _, ok := netState.Subnets[subnetName].Containers[host]; ok {
 			return fmt.Errorf("host %s has been defined more than once", host)
 		}
+		log.debug("created container %s with ID[:5] %s and PID %d\n", host, containerID[:5], containerPID)
 		netState.Subnets[subnetName].Containers[host] = containerInfo{ID: containerID, PID: containerPID}
 		veth, bridgeEnd, containerEnd, err := createVethPair(strings.ToLower(host))
 		if err != nil {
@@ -51,7 +52,7 @@ func createSubnet(netState *NetworkState, subnetName string, def subnetDef) erro
 			return err
 		}
 
-		assignedCIDR := subnetAddresser.nextCIDR()
+		assignedCIDR := subnetAddresser.nextCIDR(host)
 		log.debug("assigning %s to %s on %s\n", assignedCIDR, veth.PeerName, host)
 		if err := addressContainer(assignedCIDR, containerEnd, containerPID); err != nil {
 			log.error("couldn't address %s to %s on %s: %v\n", assignedCIDR, veth.PeerName, host, err)
@@ -95,7 +96,7 @@ func createRouter(netState *NetworkState, routerName string, def routerDef) erro
 			return err
 		}
 
-		assignedCIDR := subnetAddresser.nextCIDR()
+		assignedCIDR := subnetAddresser.nextCIDR(routerName)
 		log.debug("assigning %s to %s on %s\n", assignedCIDR, veth.PeerName, routerName)
 		if err := addressContainer(assignedCIDR, containerEnd, containerPID); err != nil {
 			log.error("couldn't address %s to %s on %s: %v\n", assignedCIDR, veth.PeerName, routerName, err)

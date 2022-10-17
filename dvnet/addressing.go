@@ -2,8 +2,10 @@ package dvnet
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"net"
+	"os"
 	"runtime"
 	"strings"
 
@@ -12,8 +14,9 @@ import (
 )
 
 type subnetAddresser struct {
-	cidrBlock net.IPNet
-	currentIP net.IP
+	cidrBlock   net.IPNet
+	currentIP   net.IP
+	AssignedIPs map[string]net.IP
 }
 
 var subnetAddressers = map[string]subnetAddresser{}
@@ -27,18 +30,20 @@ func newSubnetAddresser(subnetName string, subnetBlock net.IPNet) (subnetAddress
 	if _, ok := subnetAddressers[subnetName]; ok {
 		return subnetAddresser{}, fmt.Errorf("subnet %s has already been used up", &subnetBlock)
 	}
-	subnetAddressers[subnetName] = subnetAddresser{cidrBlock: subnetBlock, currentIP: make(net.IP, len(subnetBlock.IP))}
+	subnetAddressers[subnetName] = subnetAddresser{
+		cidrBlock: subnetBlock, currentIP: make(net.IP, len(subnetBlock.IP)), AssignedIPs: map[string]net.IP{}}
 	copy(subnetAddressers[subnetName].currentIP, subnetBlock.IP)
 	return subnetAddressers[subnetName], nil
 }
 
-func (sA subnetAddresser) nextIP() string {
+func (sA subnetAddresser) nextIP(hostName string) string {
 	binary.BigEndian.PutUint32(sA.currentIP, binary.BigEndian.Uint32(sA.currentIP)+1)
+	sA.AssignedIPs[hostName] = sA.currentIP
 	return sA.currentIP.String()
 }
 
-func (sA subnetAddresser) nextCIDR() string {
-	return fmt.Sprintf("%s/%s", sA.nextIP(), strings.Split(sA.cidrBlock.String(), "/")[1])
+func (sA subnetAddresser) nextCIDR(hostName string) string {
+	return fmt.Sprintf("%s/%s", sA.nextIP(hostName), strings.Split(sA.cidrBlock.String(), "/")[1])
 }
 
 func addressContainer(cidr string, iface netlink.Link, containerPID int) error {
@@ -69,4 +74,12 @@ func addressContainer(cidr string, iface netlink.Link, containerPID int) error {
 	}
 
 	return netns.Set(origNS)
+}
+
+func dumpAddressAssignments(path string) error {
+	addressers, err := json.Marshal(subnetAddressers)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, addressers, 0644)
 }

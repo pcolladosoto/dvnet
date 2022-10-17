@@ -120,8 +120,6 @@ func (d Driver) CreateNetwork(req *network.CreateNetworkRequest) error {
 	log.debug("exported network graph to %s\n", netGrapPath)
 	netGraph.ExportToFile(netGrapPath)
 
-	findRoutes(netGraph, netDefinition, netDefinition.Subnets["A"])
-
 	for subnetName, subnetDef := range netDefinition.Subnets {
 		if err := createSubnet(ns, subnetName, subnetDef); err != nil {
 			return d.failWithCleanup(req.NetworkID, err)
@@ -133,6 +131,26 @@ func (d Driver) CreateNetwork(req *network.CreateNetworkRequest) error {
 			return d.failWithCleanup(req.NetworkID, err)
 		}
 	}
+
+	for subnetName, subnetDef := range netDefinition.Subnets {
+		routes, err := findRoutes(netGraph, netDefinition, subnetDef)
+		if err != nil {
+			return d.failWithCleanup(req.NetworkID, err)
+		}
+		for _, host := range subnetDef.Hosts {
+			for _, route := range routes {
+				if err := routeContainer(subnetName, route, ns.Subnets[subnetName].Containers[host].PID); err != nil {
+					return d.failWithCleanup(req.NetworkID, err)
+				}
+			}
+		}
+	}
+
+	ipAddressesPath := fmt.Sprintf("%s.ipaddr", strings.Split(netOpts.netDefPath, ".")[0])
+	if err := dumpAddressAssignments(ipAddressesPath); err != nil {
+		log.error("couldn't dump the assigned IPv4 addresses: %v\n", err)
+	}
+	log.debug("exported assigned addresses to to %s\n", ipAddressesPath)
 
 	log.debug("built network state: %#v\n", *ns)
 
@@ -177,7 +195,7 @@ func (d Driver) DeleteNetwork(req *network.DeleteNetworkRequest) error {
 		}
 	}
 
-	delete(d.networks, req.NetworkID)
+	d.networks[req.NetworkID] = nil
 
 	return nil
 }

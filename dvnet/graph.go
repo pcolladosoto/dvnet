@@ -44,8 +44,8 @@ func genGraph(net netDef) (*dijkstra.Graph, error) {
 	return netTopology, nil
 }
 
-func findRoutes(netGraph *dijkstra.Graph, netDefinition netDef, srcSubnet subnetDef) (map[string][]string, error) {
-	shortestPaths := map[string][]string{}
+func findRoutes(netGraph *dijkstra.Graph, netDefinition netDef, srcSubnet subnetDef) (map[string]graphRoute, error) {
+	shortestPaths := map[string]graphRoute{}
 	for dstSubnetName, dstSubnet := range netDefinition.Subnets {
 		if srcSubnet.CIDRBlock.String() == dstSubnet.CIDRBlock.String() {
 			continue
@@ -64,7 +64,9 @@ func findRoutes(netGraph *dijkstra.Graph, netDefinition netDef, srcSubnet subnet
 				shortestPathMapped, func(vID int) string { vMID, _ := netGraph.GetMapped(vID); return vMID }(vertex))
 		}
 		log.debug("shortest path from %s to %s: %v\n", src, dst, shortestPathMapped)
-		shortestPaths[dstSubnetName] = shortestPathMapped[1 : len(shortestPathMapped)-1]
+		shortestPaths[dstSubnetName] = graphRoute{
+			destCIDR: dstSubnet.CIDRBlock,
+			rawPath:  shortestPathMapped[1 : len(shortestPathMapped)-1]}
 	}
 	log.debug("discovered shortest paths from subnet %s: %v\n", srcSubnet.CIDRBlock.String(), shortestPaths)
 	return shortestPaths, nil
