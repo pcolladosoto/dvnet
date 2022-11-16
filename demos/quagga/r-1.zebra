@@ -1,0 +1,3 @@
+log file /etc/quagga/zebra.log
+interface ethr-1-a
+interface ethr-1-c

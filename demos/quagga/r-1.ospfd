@@ -1,0 +1,8 @@
+log file /etc/quagga/ospfd.log
+interface ethr-1-c
+  ip ospf hello-interval 5
+  ip ospf area 0.0.0.1
+
+router ospf
+  ospf router-id 10.0.2.1
+  redistribute connected

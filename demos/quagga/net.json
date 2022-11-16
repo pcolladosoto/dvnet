@@ -1,0 +1,40 @@
+{
+	"name": "Test Net 0",
+	"outbound_access": {
+		"enabled": true,
+		"cidr": "192.168.240.0/24"
+	},
+	"update_hosts": true,
+	"subnets": {
+		"A": {
+			"cidr": "10.0.0.0/24",
+			"hosts": {
+					"A-1": {"image": "pcollado/dhost"},
+					"A-2": {"image": "pcollado/dhost"}
+			}
+		},
+		"B": {
+			"cidr": "10.0.1.0/24",
+			"hosts": {
+					"B-1": {"image": "pcollado/dhost"},
+					"B-2": {"image": "pcollado/dhost"}
+			}
+		},
+		"C": {
+			"cidr": "10.0.2.0/24",
+			"hosts": {}
+		}
+	},
+	"routers": {
+		"R-1": {
+			"fw_rules": {"POLICY": "ACCEPT", "ACCEPT": [], "DROP": []},
+			"subnets": ["A", "C"],
+			"image": "pcollado/drouter"
+		},
+		"R-2": {
+			"fw_rules": {"POLICY": "ACCEPT", "ACCEPT": [], "DROP": []},
+			"subnets": ["C", "B"],
+			"image": "pcollado/drouter"
+		}
+	}
+}
