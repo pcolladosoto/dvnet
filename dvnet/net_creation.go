@@ -24,8 +24,8 @@ func createSubnet(netState *NetworkState, subnetName string, def subnetDef) erro
 
 	netState.Subnets[subnetName] = SubnetResources{Bridge: subnetBridge, Containers: map[string]containerInfo{}}
 
-	for _, host := range def.Hosts {
-		containerID, containerPID, err := runContainer("pcollado/dhost", host)
+	for host, hConf := range def.Hosts {
+		containerID, containerPID, err := runContainer(hConf.Image, host)
 		if err != nil {
 			return fmt.Errorf("couldn't start container for host %s: %w", host, err)
 		}
@@ -34,7 +34,7 @@ func createSubnet(netState *NetworkState, subnetName string, def subnetDef) erro
 		}
 		log.debug("created container %s with ID[:5] %s and PID %d\n", host, containerID[:5], containerPID)
 		netState.Subnets[subnetName].Containers[host] = containerInfo{ID: containerID, PID: containerPID}
-		veth, bridgeEnd, containerEnd, err := createVethPair(strings.ToLower(host))
+		veth, bridgeEnd, containerEnd, err := createVethPair(bridgeEthPrefix, containerEthPrefix, strings.ToLower(host))
 		if err != nil {
 			log.error("couldn't create veth %s-%s: %v\n", subnetBridge.Name, host, err)
 			return err
@@ -63,7 +63,7 @@ func createSubnet(netState *NetworkState, subnetName string, def subnetDef) erro
 }
 
 func createRouter(netState *NetworkState, routerName string, def routerDef) error {
-	containerID, containerPID, err := runContainer("pcollado/drouter", routerName)
+	containerID, containerPID, err := runContainer(def.Image, routerName)
 	if err != nil {
 		return fmt.Errorf("couldn't start container for router %s: %w", routerName, err)
 	}
@@ -78,7 +78,8 @@ func createRouter(netState *NetworkState, routerName string, def routerDef) erro
 		if !okAddresses || !okResources {
 			return fmt.Errorf("subnet %s should exist at this point", subnetName)
 		}
-		veth, bridgeEnd, containerEnd, err := createVethPair(strings.ToLower(fmt.Sprintf("%s-%s", routerName, subnetName)))
+		veth, bridgeEnd, containerEnd, err := createVethPair(
+			bridgeEthPrefix, containerEthPrefix, strings.ToLower(fmt.Sprintf("%s-%s", routerName, subnetName)))
 		if err != nil {
 			log.error("couldn't create veth %s-%s: %v\n", subnetResources.Bridge.Name, routerName, err)
 			return err

@@ -9,34 +9,51 @@ import (
 )
 
 type rawNetDef struct {
-	Name            string                  `json:"name" validate:"required"`
-	OutboundAccess  bool                    `json:"outbound_access"`
-	UpdateHostsFile bool                    `json:"update_hosts"`
-	Subnets         map[string]rawSubnetDef `json:"subnets" validate:"required"`
-	Routers         map[string]routerDef    `json:"routers" validate:"required"`
+	Name             string                  `json:"name" validate:"required"`
+	OutboundAccess   RawOutboundAccessDef    `json:"outbound_access"`
+	UpdateHostsFile  bool                    `json:"update_hosts"`
+	AutomaticRouting bool                    `json:"automatic_routing"`
+	Subnets          map[string]rawSubnetDef `json:"subnets" validate:"required"`
+	Routers          map[string]routerDef    `json:"routers" validate:"required"`
+}
+
+type RawOutboundAccessDef struct {
+	Enabled bool   `json:"enabled"`
+	HopCIDR string `json:"cidr"`
+}
+
+type OutboundAccessDef struct {
+	Enabled bool      `json:"enabled"`
+	HopCIDR net.IPNet `json:"cidr"`
 }
 
 type netDef struct {
-	Name            string               `json:"name" validate:"required"`
-	OutboundAccess  bool                 `json:"outbound_access"`
-	UpdateHostsFile bool                 `json:"update_hosts"`
-	Subnets         map[string]subnetDef `json:"subnets" validate:"required"`
-	Routers         map[string]routerDef `json:"routers" validate:"required"`
+	Name             string               `json:"name" validate:"required"`
+	OutboundAccess   OutboundAccessDef    `json:"outbound_access"`
+	UpdateHostsFile  bool                 `json:"update_hosts"`
+	AutomaticRouting bool                 `json:"automatic_routing"`
+	Subnets          map[string]subnetDef `json:"subnets" validate:"required"`
+	Routers          map[string]routerDef `json:"routers" validate:"required"`
 }
 
 type rawSubnetDef struct {
-	CIDRBlock string   `json:"cidr" validate:"required,cidr4"`
-	Hosts     []string `json:"hosts" validate:"required,unique,dive,required"`
+	CIDRBlock string             `json:"cidr" validate:"required,cidr4"`
+	Hosts     map[string]HostDef `json:"hosts" validate:"required,unique,dive,required"`
+}
+
+type HostDef struct {
+	Image string `json:"image"`
 }
 
 type subnetDef struct {
-	CIDRBlock net.IPNet `json:"cidr" validate:"required,cidr4"`
-	Hosts     []string  `json:"hosts" validate:"required,unique,dive,required"`
+	CIDRBlock net.IPNet          `json:"cidr" validate:"required,cidr4"`
+	Hosts     map[string]HostDef `json:"hosts" validate:"required,unique,dive,required"`
 }
 
 type routerDef struct {
 	Subnets []string  `json:"subnets" validate:"required,unique,dive,required"`
 	FWRules fwRuleDef `json:"fw_rules"`
+	Image   string    `json:"image"`
 }
 
 type fwRuleDef struct {
@@ -75,9 +92,14 @@ func parseDef(rawDef []byte) (netDef, error) {
 		}
 	}
 
+	parsedOutboundAccess := OutboundAccessDef{
+		Enabled: rDef.OutboundAccess.Enabled,
+		HopCIDR: cidrParserWrapper(rDef.OutboundAccess.HopCIDR),
+	}
+
 	def := netDef{
 		Name:            rDef.Name,
-		OutboundAccess:  rDef.OutboundAccess,
+		OutboundAccess:  parsedOutboundAccess,
 		UpdateHostsFile: rDef.UpdateHostsFile,
 		Subnets:         parsedSubnets,
 		Routers:         rDef.Routers,

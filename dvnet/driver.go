@@ -11,12 +11,14 @@ import (
 )
 
 const (
-	scope              string = "local"
-	connectivityScope  string = "global"
-	defaultRoute       string = "0.0.0.0/0"
-	bridgePrefix       string = "dvn-"
-	bridgeEthPrefix    string = "bth-"
-	containerEthPrefix string = "eth"
+	scope                     string = "local"
+	connectivityScope         string = "global"
+	defaultRoute              string = "0.0.0.0/0"
+	bridgePrefix              string = "dvn-"
+	bridgeEthPrefix           string = "bth-"
+	containerEthPrefix        string = "eth"
+	defaultHopBridgePrefix    string = "hth-"
+	defaultHopContainerPrefix string = "dth-"
 
 	genericOptPrefix string = "com.docker.network.generic"
 
@@ -30,12 +32,13 @@ const (
 )
 
 var (
-	defaultMTU        uint   = 1500
-	defaultMode       string = modeNAT
-	defaultNetDefPath string = "/tmp/netDef.json"
-	defaultBridgeName string = ""
-	defaultGateway    string = ""
-	defaultMask       string = ""
+	defaultMTU         uint   = 1500
+	defaultMode        string = modeNAT
+	defaultNetDefPath  string = "/tmp/netDef.json"
+	defaultGatewayName string = "dvhop"
+	defaultBridgeName  string = ""
+	defaultGateway     string = ""
+	defaultMask        string = ""
 )
 
 type globalOpts struct {
@@ -57,6 +60,7 @@ type SubnetResources struct {
 type NetworkState struct {
 	BridgeName      string
 	BridgeInst      *netlink.Bridge
+	HopCIDR         string
 	MTU             uint
 	Mode            string
 	Gateway         string
@@ -98,6 +102,7 @@ func (d Driver) CreateNetwork(req *network.CreateNetworkRequest) error {
 		Gateway:         netOpts.gateway,
 		GatewayMask:     netOpts.mask,
 		PreviousSysctls: prevSysctls,
+		HopCIDR:         "",
 		Subnets:         map[string]SubnetResources{},
 		Routers:         map[string]containerInfo{},
 	}
@@ -107,6 +112,7 @@ func (d Driver) CreateNetwork(req *network.CreateNetworkRequest) error {
 	netDefinition, err := loadDef(netOpts.netDefPath)
 	if err != nil {
 		log.error("couldn't load the network definition: %v\n", err)
+		return d.failWithCleanup(req.NetworkID, err)
 	}
 
 	log.debug("loaded network definition: %+v\n", netDefinition)
@@ -132,17 +138,25 @@ func (d Driver) CreateNetwork(req *network.CreateNetworkRequest) error {
 		}
 	}
 
-	for subnetName, subnetDef := range netDefinition.Subnets {
-		routes, err := findRoutes(netGraph, netDefinition, subnetDef)
-		if err != nil {
-			return d.failWithCleanup(req.NetworkID, err)
-		}
-		for _, host := range subnetDef.Hosts {
-			for _, route := range routes {
-				if err := routeContainer(subnetName, route, ns.Subnets[subnetName].Containers[host].PID); err != nil {
-					return d.failWithCleanup(req.NetworkID, err)
+	if netDefinition.AutomaticRouting {
+		for subnetName, subnetDef := range netDefinition.Subnets {
+			routes, err := findSubnetRoutes(netGraph, netDefinition, subnetDef)
+			if err != nil {
+				return d.failWithCleanup(req.NetworkID, err)
+			}
+			for host := range subnetDef.Hosts {
+				for _, route := range routes {
+					if err := routeContainer(subnetName, route, ns.Subnets[subnetName].Containers[host].PID); err != nil {
+						return d.failWithCleanup(req.NetworkID, err)
+					}
 				}
 			}
+		}
+	}
+
+	if netDefinition.OutboundAccess.Enabled {
+		if err := confOutboundAccess(ns, defaultGatewayName, netDefinition.OutboundAccess.HopCIDR); err != nil {
+			return d.failWithCleanup(req.NetworkID, err)
 		}
 	}
 
@@ -173,6 +187,16 @@ func (d Driver) DeleteNetwork(req *network.DeleteNetworkRequest) error {
 	log.debug("trying to delete network whose state is %#v\n", *ns)
 
 	if err := restoreSysctls(ns.PreviousSysctls); err != nil {
+		log.error("%v\n", err)
+		return err
+	}
+
+	if err := restoreNAT(ns.HopCIDR); err != nil {
+		log.error("%v\n", err)
+		return err
+	}
+
+	if err := restoreForwarding(bridgePrefix + strings.ToLower(defaultGatewayName)); err != nil {
 		log.error("%v\n", err)
 		return err
 	}

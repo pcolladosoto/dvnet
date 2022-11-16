@@ -11,7 +11,7 @@ func genGraph(net netDef) (*dijkstra.Graph, error) {
 	currentID := 0
 
 	for _, subnetDef := range net.Subnets {
-		for _, host := range subnetDef.Hosts {
+		for host := range subnetDef.Hosts {
 			assignedID := netTopology.AddMappedVertex(host)
 			log.debug("graphGen: currentID -> %d, assignedID -> %d", currentID, assignedID)
 			if currentID != assignedID {
@@ -34,7 +34,7 @@ func genGraph(net netDef) (*dijkstra.Graph, error) {
 				return nil, fmt.Errorf("router %s should be connected to subnet %s but it doesn't exist",
 					routerName, subnet)
 			}
-			for _, host := range subnetDef.Hosts {
+			for host := range subnetDef.Hosts {
 				netTopology.AddMappedArc(routerName, host, 1)
 				netTopology.AddMappedArc(host, routerName, 1)
 			}
@@ -44,14 +44,21 @@ func genGraph(net netDef) (*dijkstra.Graph, error) {
 	return netTopology, nil
 }
 
-func findRoutes(netGraph *dijkstra.Graph, netDefinition netDef, srcSubnet subnetDef) (map[string]graphRoute, error) {
+func findSubnetRoutes(netGraph *dijkstra.Graph, netDefinition netDef, srcSubnet subnetDef) (map[string]graphRoute, error) {
 	shortestPaths := map[string]graphRoute{}
 	for dstSubnetName, dstSubnet := range netDefinition.Subnets {
 		if srcSubnet.CIDRBlock.String() == dstSubnet.CIDRBlock.String() {
 			continue
 		}
-		src := srcSubnet.Hosts[0]
-		dst := dstSubnet.Hosts[0]
+		var src, dst string
+		for k := range srcSubnet.Hosts {
+			src = k
+			break
+		}
+		for k := range dstSubnet.Hosts {
+			dst = k
+			break
+		}
 		shortestPath, err := netGraph.Shortest(
 			netGraph.AddMappedVertex(src), netGraph.AddMappedVertex(dst))
 		if err != nil {
