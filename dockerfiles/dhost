@@ -1,0 +1,37 @@
+# Pull a vanilla ubuntu image as a base to build upon
+FROM ubuntu
+
+# Get the necessary packages:
+	# iproute2 -> Manipulate the TCP/IP stack within the containers.
+	# iputils-ping -> Install the ping command both for testing and demonstration purposes.
+	# openssh-server -> Allow incoming SSH connections. The client is installed by default.
+	# traceroute -> Check the instantiated paths are correct from each  node.
+	# tcpdump -> Traffic analysis capabilities.
+
+# Remember we need to update the packge index before installing anything!
+
+RUN \
+	apt-get update && \
+	apt-get install -y iproute2 && \
+	apt-get install -y openssh-server && \
+	apt-get install -y iputils-ping && \
+	apt-get install -y traceroute && \
+	apt-get install -y tcpdump && \
+	# Make the /run/sshd directory so that the SSH daemon is happy...
+	mkdir /run/sshd && \
+	# Allow others to log in as root in this machine
+	echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+
+# The -c option makes bash run the command provided in the string.
+# The "/bin/bash" part will be used as the command name instead
+# of as an argument. The other tokens will be the positional arguments.
+# In pther words, $0 = "/bin/bash" and $1 = "-e"
+#
+# This command will "automagically" set root's password in each container
+RUN ["/bin/bash", "-c", "echo -e '1234\n1234' | passwd root"]
+
+# Set root's home directory
+ENV HOME /root
+
+# Default command at startup (this runs the SSH daemon)
+CMD ["/usr/sbin/sshd", "-D"]
