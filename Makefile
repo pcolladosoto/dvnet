@@ -11,7 +11,7 @@ export GOARCH      = amd64
 
 BIN_DIR = ./bin
 
-SOURCES = $(wildcard dvnet/*.go)
+SOURCES = $(wildcard dvnet/*.go) main.go
 TRASH = $(addprefix $(BIN_DIR)/,dvnet)
 
 # The `-ldflags` option lets us define global variables at compile time!
