@@ -19,21 +19,19 @@ type subnetAddresser struct {
 	AssignedIPs map[string]net.IP
 }
 
-var subnetAddressers = map[string]subnetAddresser{}
-
-func newSubnetAddresser(subnetName string, subnetBlock net.IPNet) (subnetAddresser, error) {
-	for _, addresser := range subnetAddressers {
+func newSubnetAddresser(ns *NetworkState, subnetName string, subnetBlock net.IPNet) (subnetAddresser, error) {
+	for _, addresser := range ns.Addressers {
 		if addresser.cidrBlock.String() == subnetBlock.String() {
 			return subnetAddresser{}, fmt.Errorf("subnet with CIDR %s has already been used up", &subnetBlock)
 		}
 	}
-	if _, ok := subnetAddressers[subnetName]; ok {
+	if _, ok := ns.Addressers[subnetName]; ok {
 		return subnetAddresser{}, fmt.Errorf("subnet %s has already been used up", &subnetBlock)
 	}
-	subnetAddressers[subnetName] = subnetAddresser{
+	ns.Addressers[subnetName] = subnetAddresser{
 		cidrBlock: subnetBlock, currentIP: make(net.IP, len(subnetBlock.IP)), AssignedIPs: map[string]net.IP{}}
-	copy(subnetAddressers[subnetName].currentIP, subnetBlock.IP)
-	return subnetAddressers[subnetName], nil
+	copy(ns.Addressers[subnetName].currentIP, subnetBlock.IP)
+	return ns.Addressers[subnetName], nil
 }
 
 func (sA subnetAddresser) nextIP(hostName string) string {
@@ -76,8 +74,8 @@ func addressContainer(cidr string, iface netlink.Link, containerPID int) error {
 	return netns.Set(origNS)
 }
 
-func dumpAddressAssignments(path string) error {
-	addressers, err := json.Marshal(subnetAddressers)
+func dumpAddressAssignments(ns *NetworkState, path string) error {
+	addressers, err := json.Marshal(ns.Addressers)
 	if err != nil {
 		return err
 	}

@@ -13,8 +13,8 @@ type graphRoute struct {
 	rawPath  []string
 }
 
-func routeContainer(subnetName string, route graphRoute, containerPID int) error {
-	subnetAddresser := subnetAddressers[subnetName]
+func routeContainer(ns *NetworkState, subnetName string, route graphRoute, containerPID int) error {
+	subnetAddresser := ns.Addressers[subnetName]
 
 	// Lock the OS Thread so we don't accidentally switch namespaces
 	runtime.LockOSThread()

@@ -193,7 +193,7 @@ func confOutboundAccess(netState *NetworkState, hopBridgeName string, hopBridgeC
 	}
 
 	netState.Subnets["outboundSubnet"] = SubnetResources{Bridge: hopBrd, Containers: map[string]containerInfo{}}
-	subnetAddresser, err := newSubnetAddresser("outboundSubnet", hopBridgeCIDR)
+	subnetAddresser, err := newSubnetAddresser(netState, "outboundSubnet", hopBridgeCIDR)
 	if err != nil {
 		return err
 	}

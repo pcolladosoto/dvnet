@@ -12,7 +12,7 @@ func createSubnet(netState *NetworkState, subnetName string, def subnetDef) erro
 		return fmt.Errorf("subnet %s has already been defined", subnetName)
 	}
 
-	subnetAddresser, err := newSubnetAddresser(subnetName, def.CIDRBlock)
+	subnetAddresser, err := newSubnetAddresser(netState, subnetName, def.CIDRBlock)
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func createRouter(netState *NetworkState, routerName string, def routerDef) erro
 	netState.Routers[routerName] = containerInfo{ID: containerID, PID: containerPID}
 
 	for _, subnetName := range def.Subnets {
-		subnetAddresser, okAddresses := subnetAddressers[subnetName]
+		subnetAddresser, okAddresses := netState.Addressers[subnetName]
 		subnetResources, okResources := netState.Subnets[subnetName]
 		if !okAddresses || !okResources {
 			return fmt.Errorf("subnet %s should exist at this point", subnetName)

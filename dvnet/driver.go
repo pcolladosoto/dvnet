@@ -67,6 +67,7 @@ type NetworkState struct {
 	GatewayMask     string
 	PreviousSysctls map[string]string
 	Subnets         map[string]SubnetResources
+	Addressers      map[string]subnetAddresser
 	Routers         map[string]containerInfo
 }
 
@@ -104,6 +105,7 @@ func (d Driver) CreateNetwork(req *network.CreateNetworkRequest) error {
 		PreviousSysctls: prevSysctls,
 		HopCIDR:         "",
 		Subnets:         map[string]SubnetResources{},
+		Addressers:      map[string]subnetAddresser{},
 		Routers:         map[string]containerInfo{},
 	}
 
@@ -146,7 +148,7 @@ func (d Driver) CreateNetwork(req *network.CreateNetworkRequest) error {
 			}
 			for host := range subnetDef.Hosts {
 				for _, route := range routes {
-					if err := routeContainer(subnetName, route, ns.Subnets[subnetName].Containers[host].PID); err != nil {
+					if err := routeContainer(ns, subnetName, route, ns.Subnets[subnetName].Containers[host].PID); err != nil {
 						return d.failWithCleanup(req.NetworkID, err)
 					}
 				}
@@ -161,7 +163,7 @@ func (d Driver) CreateNetwork(req *network.CreateNetworkRequest) error {
 	}
 
 	ipAddressesPath := fmt.Sprintf("%s.ipaddr", strings.Split(netOpts.netDefPath, ".")[0])
-	if err := dumpAddressAssignments(ipAddressesPath); err != nil {
+	if err := dumpAddressAssignments(ns, ipAddressesPath); err != nil {
 		log.error("couldn't dump the assigned IPv4 addresses: %v\n", err)
 	}
 	log.debug("exported assigned addresses to to %s\n", ipAddressesPath)
