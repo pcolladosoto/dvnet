@@ -1,0 +1,11 @@
+[Unit]
+Description=Docker Virtual Network Driver
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/dvnet
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
