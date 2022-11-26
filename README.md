@@ -5,10 +5,11 @@ capable of instantiating arbitrary virtual networks.
 Virtual networks can be defined through JSON files in which one can specify:
 
 1. Whether to allow the containers in the virtual network outbound Internet access.
-2. An arbitrary number of subnets, each with its own CIDR block.
-3. An arbitrary number of hosts on each subnet:
+2. Whether to automatically route the entire network.
+3. An arbitrary number of subnets, each with its own CIDR block.
+4. An arbitrary number of hosts on each subnet:
     - Each host is capable of running a specific (and possibly different) Docker image.
-4. An arbitrary number of routers bridging the different subnets:
+5. An arbitrary number of routers bridging the different subnets:
     - Each router is capable of running a specific (and possibly different) Docker image.
     - Each router can instantiate a series of `iptables`-based firewall rules.
 
@@ -69,6 +70,28 @@ Creating a network is matter of running:
 
 We just need to pass a single option: the **absolute** path of a valid JSON network definition. We'll also
 have to name the network: this is the name the Docker daemon will refer to this network as.
+
+Network definitions might be arbitrarily complex. What's more, the address assignment on each subnet is **implicit**,
+which means you'll know the CIDR block assigned to a particular host, but not necessarily the specific IPv4 address.
+You might also want to check whether your network definition is the one you actually intended to define. The best
+way to check that is to take a look at the links that have been taken into account when instantiating the network.
+
+All the above information is dumped into a couple of files. Assuming your network definition is contained on
+`netDef.json`, you'll see that after creating the network through `docker network create ...` the following two files
+will appear in your working (i.e. current) directory:
+
+1. `netDef.ipaddr`: This file is a JSON document containing the IPv4 addresses assigned to each host and router. Bear
+   in mind that as routers belong to several subnets, they'll be assigned one address per subnet: it's okay for them
+   to appear more than once.
+
+2. `netDef.netg`: This file contains the *edges* (i.e. *links*) in the graph representing the instantiated network. Each
+   line contains an initial node name, followed by the nodes they have links to and the number of links. The number of
+   links will always be `1`, as these networks aren't modelled as [multigraphs](https://en.wikipedia.org/wiki/Multigraph).
+   The important bit is checking each node has links to each of the nodes we expect them to be connected to, according to
+   the initial network definition.
+
+These files can be deleted at will: they're not needed at all, they just fulfill an informational purpose. Be sure to
+check them if you find yourself wondering things such as: what IPv4 address did `foo` have?
 
 After it's brought up, you can check the network exists with:
 
