@@ -3,7 +3,7 @@
 # Fail as soon as we encounter an error to avoid broken installations
 set -e
 
-version="0.1"
+version="0.2"
 
 unit_url="https://raw.githubusercontent.com/pcolladosoto/dvnet/main/dvnet.service"
 exec_url="https://github.com/pcolladosoto/dvnet/releases/download/v${version}/dvnet"
