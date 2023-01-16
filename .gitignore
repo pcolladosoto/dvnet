@@ -13,3 +13,9 @@ bin/
 
 # Ignore PDFs
 *.pdf
+
+# Ignore traffic data
+*.csv
+
+# Ignore GnuPlot files
+*.gp
