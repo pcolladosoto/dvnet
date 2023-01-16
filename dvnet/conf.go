@@ -98,11 +98,12 @@ func parseDef(rawDef []byte) (netDef, error) {
 	}
 
 	def := netDef{
-		Name:            rDef.Name,
-		OutboundAccess:  parsedOutboundAccess,
-		UpdateHostsFile: rDef.UpdateHostsFile,
-		Subnets:         parsedSubnets,
-		Routers:         rDef.Routers,
+		Name:             rDef.Name,
+		OutboundAccess:   parsedOutboundAccess,
+		UpdateHostsFile:  rDef.UpdateHostsFile,
+		AutomaticRouting: rDef.AutomaticRouting,
+		Subnets:          parsedSubnets,
+		Routers:          rDef.Routers,
 	}
 
 	return def, validateDef(def)
