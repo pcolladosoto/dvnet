@@ -19,3 +19,9 @@ bin/
 
 # Ignore GnuPlot files
 *.gp
+
+# Ignore traffic captures
+*.pcap*
+
+# Ignore dumped history files
+*.hist
