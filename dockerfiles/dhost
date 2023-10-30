@@ -1,5 +1,11 @@
 # Pull a vanilla ubuntu image as a base to build upon
-FROM ubuntu
+FROM ubuntu:22.04
+
+# Associate the image to the repo
+LABEL org.opencontainers.image.source https://github.com/pcolladosoto/dvnet
+
+# Add a short description
+LABEL org.opencontainers.image.description "Stock host image for dvnet"
 
 # Get the necessary packages:
 	# iproute2 -> Manipulate the TCP/IP stack within the containers.

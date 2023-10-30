@@ -1,5 +1,11 @@
 # Pull a vanilla ubuntu image as a base to build upon
-FROM ubuntu
+FROM ubuntu:22.04
+
+# Associate the image to the repo
+LABEL org.opencontainers.image.source https://github.com/pcolladosoto/dvnet
+
+# Add a short description
+LABEL org.opencontainers.image.description "Stock router image for dvnet"
 
 # Get the necessary packages:
 	# iproute2 -> Manipulate the TCP/IP stack within the containers.
@@ -7,6 +13,7 @@ FROM ubuntu
 	# openssh-server -> Allow incoming SSH connections. The client is installed by default.
 	# iptables -> Turn the routers into firewalls when needed.
 	# tcpdump -> Traffic analysis capabilities.
+	# frr -> A routing suite.
 
 # Remember we need to update the packge index before installing anything!
 
@@ -17,6 +24,7 @@ RUN \
 	apt-get install -y openssh-server && \
 	apt-get install -y iptables && \
 	apt-get install -y tcpdump && \
+	apt-get install -y frr && \
 	# Make the /run/sshd directory so that the SSH daemon is happy...
 	mkdir /run/sshd && \
 	# Allow others to log in as root in this machine
